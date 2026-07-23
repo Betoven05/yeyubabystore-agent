@@ -1,0 +1,9 @@
+import "./telegram-webhook/index.js";
+import "./consultar-stock/index.js";
+import "./listar-modelos/index.js";
+import "./buscar-producto/index.js";
+import "./inventario-bajo/index.js";
+import "./registrar-venta/index.js";
+import "./registrar-compra/index.js";
+import "./reporte-ventas/index.js";
+import "./generar-reporte-pdf/index.js";

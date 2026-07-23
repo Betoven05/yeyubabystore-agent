@@ -1,0 +1,19 @@
+{
+  "name": "yeyu-agent",
+  "version": "1.0.0",
+  "description": "Agente de inventario Yeyu Baby Store",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "func start"
+  },
+  "dependencies": {
+    "@azure/functions": "^4.0.0",
+    "@azure/storage-blob": "^12.33.0",
+    "googleapis": "^144.0.0",
+    "pdfkit": "^0.19.1"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
