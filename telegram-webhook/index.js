@@ -135,7 +135,7 @@ function fmtInventarioBajo(data) {
 
   const lineas = mostrados.map((it) => {
     const porRecibir = it.por_recibir > 0 ? ` (+${it.por_recibir} 📦)` : "";
-    return `${it.stock === 0 ? "🔴" : "🟡"} <b>${it.modelo}</b> — Stock: <b>${it.stock}</b>${porRecibir}`;
+    return `${it.stock === 0 ? "🔴" : "🟡"} <b>${it.descripcion}</b> - Stock: <b>${it.stock}</b>${porRecibir}`;
   });
 
   return (
@@ -203,7 +203,7 @@ function fmtReporteVentas(data) {
 
   const MAX = 25;
   const lineas = [...grupos.values()].slice(0, MAX).map(
-    (g) => `${g.fecha}  ${g.nombre} — x${g.cantidad}  S/${g.monto}`
+    (g) => `${g.fecha}  ${g.nombre} - x${g.cantidad}  S/${g.monto}`
   );
   const hayMas = grupos.size > MAX;
 
