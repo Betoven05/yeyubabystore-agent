@@ -16,3 +16,5 @@ export const PRODUCTOS_EXCLUIDOS_INVENTARIO = [
      "Y007", //Sonajero de Goma Sensorial 3 en 1
      "Y018" //Cubo Sensorial Montessori
 ];
+export const VERSION_ANULADO = 0;
+export const ESTADO_ANULADO = "ANULADO";

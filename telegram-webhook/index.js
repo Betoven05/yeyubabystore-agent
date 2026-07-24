@@ -160,31 +160,6 @@ function fmtCompra(data) {
   );
 }
 
-const AYUDA = `
-🤖 <b>YeyuAgente — Comandos</b>
-
-<b>Consultas</b>
-  <code>stock Y010-1</code>  → stock de un modelo
-  <code>stock Y010</code>    → todos los modelos del producto
-  <code>modelos Y010</code>  → lista cod_modelo + descripción
-  <code>buscar medias</code> → búsqueda por nombre
-  <code>inventario</code>    → modelos con stock bajo en 0
-  <code>inventario compras</code>  → stock + por recibir (para compras)
-  <code>inventario 1</code>    → modelos con stock 0 o 1
-  <code>ventas 07-26</code>         → resumen de ventas del mes
-  <code>ventas reporte 07-26</code> → PDF detallado (URL)
-  <code>ventas reporte</code>       → PDF del mes vigente
-  
-<b>Registros</b>
-  <code>venta Y010-1 24</code>           → 1 unidad a S/24
-  <code>venta Y010-1 x2 24</code>        → 2 unidades a S/24
-  <code>venta Y010-1 Y048-3 x2 24 11</code> → multi-producto
-  <code>compra Y048-3 x1 11.3</code>     → registra compra
-
-<b>Ayuda</b>
-  <code>ayuda</code>
-`.trim();
-
 function fmtReporteVentas(data) {
   if (!data.ok) return `❌ ${data.error}`;
   if (!data.total_unidades) return `📊 Sin ventas registradas en ${data.mes}`;
@@ -221,6 +196,64 @@ function fmtReportePDF(data) {
   const estado = data.generado ? "✅ Reporte generado" : "📎 Reporte existente";
   return `${estado} — ${data.mes}\n\n🔗 ${data.url}`;
 }
+
+function fmtCancelacion(data, tipo) {
+  if (!data.ok) return `❌ ${data.error}`;
+  const filas = data.anuladas.join(", ");
+  return `✅ <b>${tipo === "venta" ? "Venta(s)" : "Compra(s)"} anulada(s)</b>\n\nFila(s): ${filas}`;
+}
+
+function fmtUltimasVentas(data) {
+  if (!data.ok) return `❌ ${data.error}`;
+  if (!data.total) return `📋 No hay ventas activas registradas`;
+  const lineas = data.ventas.map(
+    (v) => `<code>#${v.fila}</code> ${v.fecha} — ${v.cod_modelo} x${v.cantidad} → S/${v.precio}`
+  );
+  return `📋 <b>Últimas ${data.total} venta(s)</b>\n\n${lineas.join("\n")}`;
+}
+
+function fmtUltimasCompras(data) {
+  if (!data.ok) return `❌ ${data.error}`;
+  if (!data.total) return `📋 No hay compras activas registradas`;
+  const lineas = data.compras.map(
+    (c) => `<code>#${c.fila}</code> ${c.fecha} — ${c.cod_modelo} x${c.cantidad} → S/${c.precio_total} (${c.estado})`
+  );
+  return `📋 <b>Últimas ${data.total} compra(s)</b>\n\n${lineas.join("\n")}`;
+}
+
+const AYUDA = `
+🤖 <b>YeyuAgente — Comandos</b>
+
+<b>Consultas</b>
+  <code>stock Y010-1</code>  → stock de un modelo
+  <code>stock Y010</code>    → todos los modelos del producto
+  <code>modelos Y010</code>  → lista cod_modelo + descripción
+  <code>buscar medias</code> → búsqueda por nombre
+  <code>inventario</code>    → modelos con stock bajo en 0
+  <code>inventario compras</code>  → stock + por recibir (para compras)
+  <code>inventario 1</code>    → modelos con stock 0 o 1
+  <code>ventas 07-26</code>         → resumen de ventas del mes
+  <code>ventas reporte 07-26</code> → PDF detallado (URL)
+  <code>ventas reporte</code>       → PDF del mes vigente
+  <code>venta ultimas</code>         → últimas 5 ventas activas
+  <code>venta ultimas 10</code>      → últimas 10 ventas activas
+  <code>compra ultimas</code>         → últimas 5 compras activas
+<b>Registros</b>
+  <code>venta Y010-1 24</code>              → 1 unidad a S/24
+  <code>venta Y010-1 x2 24</code>           → 2 unidades a S/24
+  <code>venta Y010-1 24 Y048-3 x2 24</code> → multi-producto (modelo [xN] precio ...)
+  <code>compra Y048-3 x1 11.3</code>        → registra compra
+
+<b>Cancelación</b>
+  <code>venta cancelar</code>        → anula la última venta
+  <code>venta cancelar 2</code>      → anula las últimas 2 ventas
+  <code>venta cancelar fila 45</code> → anula la venta de la fila 45
+  <code>compra cancelar</code>        → anula la última compra
+  <code>compra cancelar fila 12</code> → anula la compra de la fila 12
+
+<b>Ayuda</b>
+  <code>ayuda</code>
+`.trim();
 
 // ─── Dispatcher principal ─────────────────────────────────────────────────────
 async function dispatch(text) {
@@ -264,8 +297,28 @@ async function dispatch(text) {
     }
 
     case "venta": {
+      const sub = args[0]?.toLowerCase();
+
+      if (sub === "cancelar") {
+        const params = /^fila$/i.test(args[1])
+          ? { fila: args[2] }
+          : { cantidad: args[1] ? parseInt(args[1]) : 1 };
+        const data = await api("cancelar-venta", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(params),
+        });
+        return fmtCancelacion(data, "venta");
+      }
+
+      if (sub === "ultimas") {
+        const n = args[1] ? parseInt(args[1]) : 5;
+        const data = await api(`ultimas-ventas?n=${n}`);
+        return fmtUltimasVentas(data);
+      }
+
       const items = parseVenta(args);
-      if (!items) return "Formato: venta Y010-1 [x2] 24 | venta Y010-1 Y048-3 x2 24 11";
+      if (!items) return "Formato: venta Y010-1 [x2] 24 | venta Y010-1 24 Y048-3 x2 24";
       const data = await api("registrar-venta", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -291,6 +344,26 @@ async function dispatch(text) {
     }
 
     case "compra": {
+      const sub = args[0]?.toLowerCase();
+
+      if (sub === "cancelar") {
+        const params = /^fila$/i.test(args[1])
+          ? { fila: args[2] }
+          : { cantidad: args[1] ? parseInt(args[1]) : 1 };
+        const data = await api("cancelar-compra", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(params),
+        });
+        return fmtCancelacion(data, "compra");
+      }
+
+      if (sub === "ultimas") {
+        const n = args[1] ? parseInt(args[1]) : 5;
+        const data = await api(`ultimas-compras?n=${n}`);
+        return fmtUltimasCompras(data);
+      }
+
       const parsed = parseCompra(args);
       if (!parsed) return "Formato: compra Y048-3 [x1] 11.3";
       const data = await api("registrar-compra", {
