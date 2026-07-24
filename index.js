@@ -7,3 +7,7 @@ import "./registrar-venta/index.js";
 import "./registrar-compra/index.js";
 import "./reporte-ventas/index.js";
 import "./generar-reporte-pdf/index.js";
+import "./cancelar-compra/index.js";
+import "./cancelar-venta/index.js";
+import "./ultimas-compras/index.js";
+import "./ultimas-ventas/index.js";
