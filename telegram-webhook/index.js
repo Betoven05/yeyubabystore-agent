@@ -39,32 +39,32 @@ async function api(path, options = {}) {
 
 // ─── Parser de comandos ───────────────────────────────────────────────────────
 /**
- * Parsea: "venta Y010-1 24" | "venta Y010-1 x2 24" | "venta Y010-1 Y048-3 x2 24 11"
+ * Parsea: "Y010-1 24" | "Y010-1 x2 24" | "Y010-1 11 Y048-3 x2 24" | "Y010-1 x2 33 Y048-3 x2 24"
  * Retorna array de { modelo, cantidad, precio }
  */
 function parseVenta(tokens) {
-  const modelos = [];
+  const items = [];
   let i = 0;
 
-  while (i < tokens.length && /^Y\d+-.+/i.test(tokens[i])) {
-    modelos.push(tokens[i].toUpperCase());
+  while (i < tokens.length) {
+    if (!/^Y\d+-.+/i.test(tokens[i])) return null;
+    const modelo = tokens[i].toUpperCase();
     i++;
+
+    let cantidad = 1;
+    if (i < tokens.length && /^x\d+$/i.test(tokens[i])) {
+      cantidad = parseInt(tokens[i].slice(1));
+      i++;
+    }
+
+    if (i >= tokens.length || isNaN(Number(tokens[i]))) return null;
+    const precio = Number(tokens[i]);
+    i++;
+
+    items.push({ modelo, cantidad, precio });
   }
 
-  let cantidad = 1;
-  if (i < tokens.length && /^x\d+$/i.test(tokens[i])) {
-    cantidad = parseInt(tokens[i].slice(1));
-    i++;
-  }
-
-  const precios = tokens.slice(i).map(Number);
-  if (!precios.length || precios.some(isNaN)) return null;
-
-  return modelos.map((m, idx) => ({
-    modelo: m,
-    cantidad,
-    precio: precios[idx] ?? precios[0],
-  }));
+  return items.length ? items : null;
 }
 
 /**

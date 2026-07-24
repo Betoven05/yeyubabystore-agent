@@ -1,3 +1,4 @@
+// registrar-compra/index.js
 import { app } from "@azure/functions";
 import { getSheetsClient, SHEET_ID, SHEETS } from "../shared/sheetsClient.js";
 import { json, error, today, requireInternalKey } from "../shared/utils.js";
