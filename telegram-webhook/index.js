@@ -221,27 +221,38 @@ function fmtUltimasCompras(data) {
   return `📋 <b>Últimas ${data.total} compra(s)</b>\n\n${lineas.join("\n")}`;
 }
 
+function fmtPrecio(data) {
+  if (!data.ok) return `❌ ${data.error}`;
+  const hist = data.precio_historico !== null ? `S/${data.precio_historico}` : "No aplica (sin compras)";
+  const ult = data.promedio_ultimas_compras !== null
+    ? `S/${data.promedio_ultimas_compras} (últimas ${data.compras_consideradas})`
+    : "Sin compras registradas";
+  return `💰 <b>Precio ${data.query}</b> <i>(${data.tipo})</i>\n\nHistórico: <b>${hist}</b>\nPromedio últimas compras: <b>${ult}</b>`;
+}
+
 const AYUDA = `
 🤖 <b>YeyuAgente — Comandos</b>
 
 <b>Consultas</b>
-  <code>stock Y010-1</code>  → stock de un modelo
-  <code>stock Y010</code>    → todos los modelos del producto
-  <code>modelos Y010</code>  → lista cod_modelo + descripción
-  <code>buscar medias</code> → búsqueda por nombre
-  <code>inventario</code>    → modelos con stock bajo en 0
+  <code>stock Y010-1</code>     → stock de un modelo
+  <code>stock Y010</code>       → todos los modelos del producto
+  <code>modelos Y010</code>     → lista cod_modelo + descripción
+  <code>buscar medias</code>    → búsqueda por nombre
+  <code>inventario</code>       → modelos con stock bajo en 0
   <code>inventario compras</code>  → stock + por recibir (para compras)
-  <code>inventario 1</code>    → modelos con stock 0 o 1
-  <code>ventas 07-26</code>         → resumen de ventas del mes
+  <code>inventario 1</code>     → modelos con stock 0 o 1
+  <code>ventas 07-26</code>     → resumen de ventas del mes
   <code>ventas reporte 07-26</code> → PDF detallado (URL)
-  <code>ventas reporte</code>       → PDF del mes vigente
-  <code>venta ultimas</code>         → últimas 5 ventas activas
-  <code>venta ultimas 10</code>      → últimas 10 ventas activas
-  <code>compra ultimas</code>         → últimas 5 compras activas
+  <code>ventas reporte</code>   → PDF del mes vigente
+  <code>venta ultimas</code>    → últimas 5 ventas activas
+  <code>venta ultimas 10</code> → últimas 10 ventas activas
+  <code>compra ultimas</code>   → últimas 5 compras activas
+  <code>precio Y010</code>      → histórico + promedio últimas 5 compras
+
 <b>Registros</b>
   <code>venta Y010-1 24</code>              → 1 unidad a S/24
   <code>venta Y010-1 x2 24</code>           → 2 unidades a S/24
-  <code>venta Y010-1 24 Y048-3 x2 24</code> → multi-producto (modelo [xN] precio ...)
+  <code>venta Y010-1 24 Y048-3 x2 24</code> → multi-producto
   <code>compra Y048-3 x1 11.3</code>        → registra compra
 
 <b>Cancelación</b>
@@ -372,6 +383,12 @@ async function dispatch(text) {
         body: JSON.stringify(parsed),
       });
       return fmtCompra(data);
+    }
+
+    case "precio": {
+      if (!args[0]) return "Uso: precio <producto|modelo>";
+      const data = await api(`precio-producto?q=${args[0].toUpperCase()}`);
+      return fmtPrecio(data);
     }
 
     case "ayuda":

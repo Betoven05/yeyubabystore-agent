@@ -11,3 +11,4 @@ import "./cancelar-compra/index.js";
 import "./cancelar-venta/index.js";
 import "./ultimas-compras/index.js";
 import "./ultimas-ventas/index.js";
+import "./precio-producto/index.js";

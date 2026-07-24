@@ -24,7 +24,7 @@ export function error(message, status = 400) {
 export function requireInternalKey(request) {
   const key = request.headers.get('x-functions-key');
   if (!key || key !== process.env.FUNCTIONS_KEY) {
-    return { status: 401, body: JSON.stringify({ ok: false, error: 'No autorizado' }) };
+    return error('No autorizado', 401);
   }
   return null;
 }
